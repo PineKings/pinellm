@@ -1,8 +1,9 @@
 import requests
 from typing import Dict, Union
 
-from ..schemas import SafeDotDict, ChatRequest
-from ..config import Supplier
+from ..schemas.safedot import SafeDotDict
+from ..schemas.chat_request import ChatRequest
+from ..config.supplier import Supplier
 from .cost import cost
 
 def chat(payload:ChatRequest, headers:dict = None) -> Union[SafeDotDict, dict]:

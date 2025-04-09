@@ -1,6 +1,7 @@
 from decimal import Decimal, getcontext
-from ..schemas import SafeDotDict
-from ..config import ConfigManager
+
+from ..schemas.safedot import SafeDotDict
+from ..config.config_manager import ConfigManager
 
 def cost(request_response: SafeDotDict) -> dict:
     """自动计算成本

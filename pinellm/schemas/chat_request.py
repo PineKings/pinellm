@@ -2,8 +2,8 @@ import json
 from typing import Dict, Union
 import requests
 
-from ..tools import encode_image
-from ..schemas import SafeDotDict
+from ..tools.basic.base_image import encode_image
+from ..schemas.safedot import SafeDotDict
 
 
 class Propertie:
@@ -231,7 +231,7 @@ class ChatRequest:
         tool_choice: str = None,
         enable_search: bool = None
     ):
-        from ..config import ConfigManager
+        from ..config.config_manager import ConfigManager
         self.model = model
         self.messages = messages
         model_info = ConfigManager().Model_Map.get(model)
@@ -303,8 +303,8 @@ class ChatRequest:
     
     def send(self):
         """直接发起请求"""
-        from ..config import Supplier
-        from ..llm_chat import cost
+        from ..config.supplier import Supplier
+        from ..llm_chat.cost import cost
         supplier = Supplier(self.model)
         # 打印供应商信息
         #print(f"供应商 {supplier.supplier}")

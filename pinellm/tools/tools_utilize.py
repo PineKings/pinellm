@@ -1,4 +1,5 @@
-from ..schemas import SafeDotDict, Content, Message
+from ..schemas.safedot import SafeDotDict
+from ..schemas.chat_request import Message, Content
 
 def toolsutilize(return_model:SafeDotDict) -> list[Message]:
     """传入工具调用的返回模型"""

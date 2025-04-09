@@ -1,9 +1,9 @@
 # 工具调用示例
 
 # 引入相关模块
-from pinellm.schemas import ChatRequest,Message,Tool
-from pinellm.tools import toolsutilize
-from pinellm.config import ConfigManager
+from pinellm import ChatRequest,Message,Tool
+from pinellm import toolsutilize
+from pinellm import ConfigManager
 
 # 配置文件
 config = ConfigManager()

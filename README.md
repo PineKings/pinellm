@@ -1,6 +1,6 @@
 # PineLLM  
 **一个轻量级的多供应商LLM交互框架**  
-[![GitHub](https://img.shields.io/badge/GitHub-PineKings/pingllm-blue)](https://github.com/PineKings/pingllm)  
+[![GitHub](https://img.shields.io/badge/GitHub-PineKings/pinellm-blue)](https://github.com/PineKings/pinellm)  
 [![Email](https://img.shields.io/badge/Email-work.wss%40icloud.com-red)](mailto:work.wss@icloud.com)
 
 ---
@@ -317,10 +317,7 @@ config.load_config(
 ---
 
 ## 联系我们  
-- 项目地址：https://github.com/PineKings/pingllm  
+- 项目地址：https://github.com/PineKings/pinellm  
 - 开发者邮件：work.wss@icloud.com  
-- 技术交流群：QQ群 1234567（群名称：PineLLM开发者社区）
 
 ---
-
-> 特别说明：本框架使用Apache-2.0协议开源，商用需遵守协议条款。

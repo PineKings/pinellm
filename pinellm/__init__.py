@@ -35,22 +35,16 @@ Usage:
 >>> # 调用 chat 函数
 >>> aaa = chat(request)
 """
-import logging
-
-from .config import Supplier
-from .llm_chat import chat
-from .schemas import ChatRequest,Message,ResponseFormat,Tool,Propertie,SafeDotDict,Content
-from . import config
+from .config.config_manager import ConfigManager
+from .llm_chat.request import chat
+from .schemas.chat_request import ChatRequest,Content,Message,Tool,Propertie
 
 __all__ = [
     "chat",
     "ChatRequest",
     "Message",
-    "ResponseFormat",
     "Tool",
     "Propertie",
-    "Supplier",
-    "SafeDotDict",
     "Content",
-    "config"
+    "ConfigManager"
 ]
