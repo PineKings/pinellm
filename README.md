@@ -262,38 +262,13 @@ config.load_config(
 
 ---
 
-## 测试用例  
-### 基础测试  
-```python
-def test_chat_request():
-    req = ChatRequest(
-        model="qwen-plus",
-        messages=[Message("user", "你好")],
-    )
-    assert req.model == "qwen-plus"
-    assert req.messages[0].role == "user"
-```
-
-### 异常测试  
-```python
-def test_invalid_model():
-    with pytest.raises(ValueError):
-        ChatRequest(model="nonexistent_model", messages=[])
-```
-
-### 性能测试  
-```python
-def test_cost_calculation():
-    mock_response = SafeDotDict({
-        "model": "qwen-plus",
-        "usage": {
-            "prompt_tokens": 100,
-            "completion_tokens": 50
-        }
-    })
-    cost = pinellm.cost(mock_response)
-    assert cost["total_price"] == 0.00024  # 100*0.0008 + 50*0.002
-```
+## 模型和厂商适配 （持续更新）
+- **阿里云**   
+  - API文档：[阿里云文档](https://bailian.console.aliyun.com/console?tab=doc)  
+  - 供应商：[阿里云供应商](https://bailian.console.aliyun.com)
+  - 模型列表：[阿里云模型列表](https://bailian.console.aliyun.com/console?tab=doc#/list/?type=model&url=%2Fzh%2Fmodel-studio%2Fmodels)
+      - qwen-max
+      - qwen-plus
 
 ---
 
