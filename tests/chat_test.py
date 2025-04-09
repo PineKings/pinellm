@@ -2,7 +2,6 @@ from pinellm import ChatRequest, Message, ConfigManager
 from dotenv import load_dotenv
 import os
 
-
 config = ConfigManager()
 load_dotenv()
 config.load_config(

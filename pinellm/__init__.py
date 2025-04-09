@@ -36,8 +36,9 @@ Usage:
 >>> aaa = chat(request)
 """
 from .config.config_manager import ConfigManager
-from .llm_chat.request import chat
+from .llm_chat.request import chat,chat_stream
 from .schemas.chat_request import ChatRequest,Content,Message,Tool,Propertie
+from .tools.tools_utilize import toolsutilize
 
 __all__ = [
     "chat",
@@ -46,5 +47,7 @@ __all__ = [
     "Tool",
     "Propertie",
     "Content",
-    "ConfigManager"
+    "ConfigManager",
+    "toolsutilize",
+    "chat_stream"
 ]

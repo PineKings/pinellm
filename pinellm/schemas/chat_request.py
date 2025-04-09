@@ -52,7 +52,7 @@ class Tool:
         self.name = name
         self.description = description
         if properties is None:
-            self.properties = {}
+            self.properties = None
             self.required = []
         else:
             self.required = [prop.name for prop in properties]
@@ -137,12 +137,13 @@ class Message:
     方法：
     - as_dict(): 将消息结构体转换为字典，用于发送到API
     """
-    def __init__(self, role: str, content: Union[Content,str], tool_call_id: str = None,tool_calls:list = None):
+    def __init__(self, role: str, content: Union[Content,str], tool_call_id: str = None,tool_calls:list = None,*args, **kwargs):
         self.role = role
-        if isinstance(content, str):
-            self.content = Content(text=content).as_dict()
-        else:
+        if isinstance(content, Content):
             self.content = content.as_dict()
+        else:
+            self.content = Content(text=content).as_dict()
+            
         if role == "tool":
             self.tool_call_id = tool_call_id
         else:
@@ -209,6 +210,8 @@ class ChatRequest:
     - tools(list[Tool]): 可供模型调用的工具数组，可以包含一个或多个工具对象。一次Function Calling流程模型会从中选择一个工具，需要通过`Tool`类创建
     - tool_choice(any): 工具选择策略，可选值：`"auto"`/`"none"`/`{"type": "function", "function": {"name": "the_function_to_call"}}`。默认为`"auto"`，表示模型会根据上下文自动选择工具；`"none"`表示不调用工具；`"function"`表示调用指定的工具。
     - enable_search(bool): 是否启用搜索，若模型不支持，则忽略该参数。默认为`False`
+    - model_version(int): 模型版本，默认为1,可选值：1/2/3,1/2为稳定版，最新版，3为自定义版本
+    - model_name(str): 模型名称，默认为None，当`model_version`为3时，该参数必填，请确保该模型存在
     
     方法：
     - as_dict(): 将请求结构体转换为字典，用于使用外部函数发送到API
@@ -229,15 +232,26 @@ class ChatRequest:
         seed: int = None,
         tools: list[Tool] = None,
         tool_choice: str = None,
-        enable_search: bool = None
+        enable_search: bool = None,
+        model_version: int  = 1,
+        model_name: str = None,
+        stream = False
     ):
         from ..config.config_manager import ConfigManager
-        self.model = model
+        
         self.messages = messages
         model_info = ConfigManager().Model_Map.get(model)
         if model_info is None:
-            raise ValueError(f"模型:{model} 未定义！")
-        
+            from ..errors import ModelError
+            raise ModelError(f"模型: {model} 不存在,请确保配置文件中包含该模型")
+        if model_version == 2:
+            self.model = model_info.newname if model_info.newname is not None else model
+        elif model_version == 3:
+            if model_name is None:
+                raise ParamError("当model_version为3时，model_name不能为空")
+            self.model = model_name
+        else:  # model_version 默认为1
+            self.model = model
         self.modalities = ["text"] if modalities is None else modalities
         
         self.temperature = model_info.temperature if temperature is None else temperature
@@ -250,6 +264,8 @@ class ChatRequest:
         self.tools = tools if model_info.tools else None
         self.tool_choice = None if self.tools is None else tool_choice
         self.enable_search = None if model_info.enable_search is False else enable_search
+        self.stream = stream if model_info.thought_chain is False else True
+        self.thought_chain = model_info.thought_chain if model_info.thought_chain else False
 
     def as_dict(self):
         data = {}
@@ -279,6 +295,8 @@ class ChatRequest:
             data["tool_choice"] = self.tool_choice
         if self.enable_search is not None:
             data["enable_search"] = self.enable_search
+        if self.stream is not None:
+            data["stream"] = self.stream
         for key, value in data.items():
             if value is None:
                 del data[key]
@@ -302,37 +320,19 @@ class ChatRequest:
         )
     
     def send(self):
-        """直接发起请求"""
-        from ..config.supplier import Supplier
-        from ..llm_chat.cost import cost
-        supplier = Supplier(self.model)
-        # 打印供应商信息
-        #print(f"供应商 {supplier.supplier}")
-        
-        # 设置请求头
-        headers = {
-            "Authorization": f"Bearer {supplier.api_key}",  # 设置授权信息
-            "Content-Type": "application/json",  # 设置内容类型为JSON
-            "Accept": "*/*",  # 接受所有类型的响应
-            "Accept-Encoding": "gzip, deflate, br",
-            "User-Agent": "PostmanRuntime-ApipostRuntime/1.1.0",
-            "Connection": "keep-alive"
-        }
-        #print(f"请求体：{payload.as_dict()}")
-        response = requests.request("POST", url=supplier.api_url, json=self.as_dict(), headers=headers)
-        
-        if response.status_code == 200:
-            data = response.json()
-            data["price"] = cost(SafeDotDict(data))
-            return SafeDotDict(data)
+        """直接请求请求"""
+        from ..llm_chat.request import chat
+        if self.thought_chain:
+            return chat(payload=self, stream=True)
         else:
-            return SafeDotDict({
-                "error": True,
-                "status_code": response.status_code,
-                "message": response.text,
-            })
+            self.stream = False
+            return chat(payload=self)
 
-        
+    def send_stream(self):
+        """流式请求，返回流"""
+        from ..llm_chat.request import chat_stream
+        self.stream = True
+        return chat_stream(payload=self)
 
 # 使用示例
 if __name__ == "__main__":

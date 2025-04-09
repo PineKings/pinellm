@@ -1,5 +1,4 @@
-from pinellm.config import ConfigManager
-
+from pinellm import ConfigManager
 config = ConfigManager()
 
 

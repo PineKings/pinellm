@@ -3,7 +3,7 @@ from ..schemas.chat_request import Message, Content
 
 def toolsutilize(return_model:SafeDotDict) -> list[Message]:
     """传入工具调用的返回模型"""
-    from ..config import ConfigManager
+    from ..config.config_manager import ConfigManager
     config_manager = ConfigManager()
     tool_calls=return_model.choices.message.tool_calls
     if tool_calls:

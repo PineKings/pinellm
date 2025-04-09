@@ -24,7 +24,8 @@ class Supplier:
         config_manager = ConfigManager()
         supplier_info = config_manager.get_supplier(model)
         if not supplier_info:
-            raise ValueError(f"模型 {model} 在任何供应商中均未找到")
+            from ..errors import SupplierError
+            raise SupplierError(f"未找到支持「{model}」模型的供应商，请检查模型名称是否正确或检查供应商配置")
         self.supplier = supplier_info.get("name")
         self.api_key = supplier_info.get("api_key")
         self.api_url = supplier_info.get("url")

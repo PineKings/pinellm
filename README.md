@@ -263,13 +263,19 @@ config.load_config(
 ---
 
 ## 模型和厂商适配 （持续更新）
-- **阿里云**   
+### **阿里云**   
   - API文档：[阿里云文档](https://bailian.console.aliyun.com/console?tab=doc)  
   - 供应商：[阿里云供应商](https://bailian.console.aliyun.com)
   - 模型列表：[阿里云模型列表](https://bailian.console.aliyun.com/console?tab=doc#/list/?type=model&url=%2Fzh%2Fmodel-studio%2Fmodels)
       - qwen-max
       - qwen-plus
 
+### **DeepSeek**
+  - API文档：[DeepSeek文档](https://api-docs.deepseek.com/zh-cn/)
+  - 供应商：[DeepSeek供应商](https://api-docs.deepseek.com)
+  - 模型列表：[DeepSeek模型列表](https://api-docs.deepseek.com/zh-cn/quick_start/pricing)
+      - deepseek-chat
+      - deepseek-reasoner(推理模型)
 ---
 
 ## 模块详解  
