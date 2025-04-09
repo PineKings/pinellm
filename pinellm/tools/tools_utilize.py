@@ -1,8 +1,8 @@
 from ..schemas import SafeDotDict, Content, Message
 
-def toolsutilize(return_model:SafeDotDict):
+def toolsutilize(return_model:SafeDotDict) -> list[Message]:
+    """传入工具调用的返回模型"""
     from ..config import ConfigManager
-    """调用工具"""
     config_manager = ConfigManager()
     tool_calls=return_model.choices.message.tool_calls
     if tool_calls:

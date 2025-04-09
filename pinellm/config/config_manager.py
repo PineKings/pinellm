@@ -80,12 +80,26 @@ class ConfigManager:
             ]
         ```
         """
-        # 检查是否存在重复的模型名称
-        self.Model_Map = SafeDotDict({
-            **models,  # 先复制第一个字典的所有键值
-            **{k: v for k, v in Built_Models.items() if k not in models}
-        })
+        # 检查是否存在重复的模型名称,如果存在，则新的模型（models）和旧的模型（Built_Models）合并，重复的参数被新的模型参数覆盖
+    
+        model_map = Built_Models.copy()
+    
+        # 遍历新字典中的每个模型
+        for model_name, model_details in models.items():
+            if model_name in Built_Models.keys():
+                # 如果模型存在
+                sub_dictionary = Built_Models.get(model_name).copy()
+                for key, value in model_details.items():
+                    sub_dictionary[key] = value
+                model_map[model_name] = sub_dictionary
+            else:
+                # 如果模型不存在，则添加到字典中
+                model_map[model_name] = model_details
+
+        self.Model_Map = SafeDotDict(model_map)
         
+    
+        # 合并字典
         self.Tools_Map = SafeDotDict({
             **tools,  # 先复制第一个字典的所有键值
             **{k: v for k, v in Built_Tools.items() if k not in tools}

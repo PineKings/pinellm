@@ -75,63 +75,132 @@ pinellm/
 ---
 
 ## 使用示例  
+### 增加模型和供应商配置
+```python
+from pinellm.config import ConfigManager
+
+config = ConfigManager()
+
+
+# 设置参数
+mymodels = {
+    "qwen-plus":{
+        "newname": "qwen-plus-latest",
+        "name": "qwen-plus",
+        "type": "text",
+        "description": "能力均衡，推理效果、成本和速度介于通义千问-Max和通义千问-Turbo之间，适合中等复杂任务。",
+        "price_in": 0.002,
+        "price_out": 0.0008,
+        "max_tokens_in": 129024,
+        "max_tokens_out": 8192,
+        "max_thought": 0,
+        "max_context": 131072,
+        "enable_search": True,
+        "response_format": True,
+        "tools": True,
+        "text_input": True,
+        "text_output": True,
+        "audio_input": False,
+        "audio_output": False,
+        "image_input": False,
+        "image_output": False,
+        "video_input": False,
+        "video_output": False,
+        "thought_chain": False,
+        "modalities": ["text"],
+        "temperature": 0.95,
+        "top_p": 0.7,
+        "presence_penalty": 0.6,
+        "n": 1,
+        "seed": 1234
+    }
+}
+
+config.load_config(models=mymodels)
+
+# 设置供应商
+mysuppliers = [
+    {
+        "name": "custom_supplier",
+        "url": "https://api.example.com/v1/chat",
+        "api_key": "YOUR_API_KEY", # 避免明文，可以是一个apikey的获取函数，如：os.getenv("API_KEY"),
+        "models": ["qwen-plus-latest"]
+    }
+]
+
+config.load_config(suppliers=mysuppliers)
+
+```
+
 ### 基础聊天请求  
 ```python
-from pinellm import ChatRequest, Message, ResponseFormat, Tool, Propertie,chat
+from pinellm import ChatRequest, Message
 
 # 创建消息
 messages = [
     Message("system", "You are a helpful assistant."),
-    Message("user", "现在几点了？")
-]
-
-# 定义工具（获取当前时间）
-tools = [
-    Tool(
-        "get_current_time",
-        "获取当前时间",
-        properties=None
-    )
+    Message("user", "介绍一下你自己")
 ]
 
 # 发送请求
 response = ChatRequest(
     model="qwen-plus",
-    messages=messages,
-    tools=tools,
-    tool_choice="auto"
+    messages=messages
 ).send()
 
 # 处理响应
-print(f"回答：{response.choices.message.content.text}")
-print(f"费用：{response.price.total_price} 元")
+print(f"回答：{response.choices.message.content}") # 回答：你好！我是通义千问，阿里巴巴集团旗下的超大规模语言模型。我能够回答问题、创作文字，比如写故事、写公文、写邮件、写剧本、逻辑推理、编程等等，还能表达观点，玩游戏等。我熟练掌握多种语言，包括但不限于中文、英文、德语、法语、西班牙语等。如果你有任何问题或需要帮助，随时可以问我！
+print(f"费用：{response.price.total_price} 元") # 费用：0.0001848 元
 ```
 
 ### 工具调用示例  
 ```python
-# 包含工具调用的请求
-messages_with_tool = [
-    Message("user", "请告诉我当前时间和天气"),
-    Message(
-        "assistant",
-        tool_calls=[{
-            "id": "tool1",
-            "function": {
-                "name": "get_current_time",
-                "arguments": {}
-            }
-        }]
-    )
-]
+# 工具调用示例
 
-# 自动处理工具调用
+# 引入相关模块
+from pinellm.schemas import ChatRequest,Message,Tool
+from pinellm.tools import toolsutilize
+from pinellm.config import ConfigManager
+
+# 配置文件
+config = ConfigManager()
+# 增加自定义工具
+def get_neme():
+    return "PineKing"
+
+mytools = {
+    "get_neme": get_neme
+}
+config.load_config(tools=mytools)
+
+# 调用工具
+## 构建消息列表
+messages = [Message(role="system", content="你是一位用户对话助理，请根据用户需求提供帮助"),
+            Message(role="user", content="请告诉我你的名字")]
+
+## 构建请求体并直接发送请求
 response = ChatRequest(
     model="qwen-plus",
-    messages=messages_with_tool
+    messages=messages,
+    tools=[Tool(name="get_neme",description="获取助理名字",properties=None)]
 ).send()
 
-# 输出工具返回结果
-print(response.messages[1].content.text)  # 输出当前时间
+# 判断是否调用工具
+if response.choices.message.tool_calls:
+    ## 调用工具
+    tool_messages = toolsutilize(response)
+    ## 如果结果不需要返回大模型处理，则直接返回工具返回的消息
+    print(tool_messages[-1].content) # 返回：PineKing
+    
+    ## 如果结果需要返回大模型处理，则将工具返回的消息添加到消息列表中，再次发送请求
+    messages += tool_messages
+    response = ChatRequest(
+        model="qwen-plus",
+        messages=messages,
+        tools=[Tool(name="get_neme", description="获取助理名字", properties=None)]
+    ).send()
+    ## 大模型返回结果
+    print(response.choices.message.content) # 返回：我的名字是PineKing。很高兴为您服务！
 ```
 
 ---
