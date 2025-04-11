@@ -3,3 +3,5 @@
 /dist
 /pinellm.egg-info
 .pypirc
+*.env
+models_get.py

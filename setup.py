@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='pinellm',  # 包名（需与PyPI唯一）
-    version='1.0.2',  # 版本号（后续发布需递增）
+    version='1.0.3',  # 版本号（后续发布需递增）
     packages=find_packages(),  # 自动发现所有包
     install_requires=[
         'requests',  # 你代码中用到的依赖（如requests）

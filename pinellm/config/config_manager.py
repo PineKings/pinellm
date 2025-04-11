@@ -2,7 +2,7 @@
 from .built.models import Built_Models
 from .built.tools import Built_Tools
 from .built.suppliers import Built_Suppliers
-from ..schemas.safedot import SafeDotDict
+from ..schemas.safedot import SafeDotDict,WritableSafeDotDict, ModelTemplate,ToolTemplate,SupplierTemplate
 
 class ConfigManager:
     """安全配置管理器
@@ -14,18 +14,28 @@ class ConfigManager:
     属性：
      - Model_Map: 模型字典映射
      - Tools_Map: 工具字典映射
-     - Supplier_List: 供应商列表
+     - Supplier_Map: 供应商列表
     """
     _instance = None
     def __new__(cls, *args, **kwargs):
         if not cls._instance:
             cls._instance = super().__new__(cls, *args, **kwargs)
-            cls._instance.Model_Map = SafeDotDict(Built_Models)
-            cls._instance.Tools_Map = SafeDotDict(Built_Tools)
-            cls._instance.Supplier_List = Built_Suppliers
+            # 为每个映射指定模板
+            cls._instance.Model_Map = WritableSafeDotDict(
+                Built_Models,
+                template=ModelTemplate
+            )
+            cls._instance.Tools_Map = WritableSafeDotDict(
+                Built_Tools,
+                template=None
+            )
+            cls._instance.Supplier_Map = WritableSafeDotDict(
+                Built_Suppliers,
+                template=SupplierTemplate
+            )
         return cls._instance
 
-    def load_config(self,tools:dict = {}, models:dict = {}, suppliers:list = []):
+    def load_config(self,tools:dict = {}, models:dict = {}, suppliers:dict = {}):
         """加载配置
 
         Args:
@@ -71,15 +81,15 @@ class ConfigManager:
             }
         }
         
-        suppliers = [
-                {
+        suppliers = {
+                "qwen":{
                 "name": "qwen",
                 "description": "阿里云",
                 "url": "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
                 "api_key": os.getenv("QWEN_API_KEY"),  # 请自己替换一个阿里云api_key的替换逻辑
                 "models":['multimodal-embedding-v1', 'qvq-max-latest', 'qwen-coder-plus-latest', 'qwen-coder-turbo-latest', 'qwen-long-latest', 'qwen-max', 'qwen-omni-turbo-latest', 'qwen-plus', 'qwen-plus-character', 'qwen-turbo-latest', 'qwen-vl-max-latest', 'qwen-vl-ocr-latest', 'qwen-vl-plus-latest', 'qwq-plus-latest', 'text-embedding-async-v1', 'text-embedding-async-v2', 'text-embedding-v1', 'text-embedding-v2', 'text-embedding-v3', 'tongyi-intent-detect-v3', 'wanx2.0-t2i-turbo', 'wanx2.1-i2v-plus', 'wanx2.1-i2v-turbo', 'wanx2.1-t2i-plus', 'wanx2.1-t2i-turbo', 'wanx2.1-t2v-plus', 'wanx2.1-t2v-turbo', 'wanx-v1']
                 }
-            ]
+            }
         ```
         """
         # 检查是否存在重复的模型名称,如果存在，则新的模型（models）和旧的模型（Built_Models）合并，重复的参数被新的模型参数覆盖
@@ -99,7 +109,24 @@ class ConfigManager:
                 model_map[model_name] = model_details
 
         self.Model_Map = SafeDotDict(model_map)
-        
+
+        supplier_map = Built_Suppliers.copy()
+    
+        # 遍历新字典中的每个模型
+        for supplier_name, supplier_details in suppliers.items():
+            if supplier_name in Built_Suppliers.keys():
+                # 如果模型存在
+                sub_dictionary = Built_Suppliers.get(supplier_name).copy()
+                for key, value in supplier_details.items():
+                    if key == "models":
+                        sub_dictionary[key] = list(set(sub_dictionary[key] + value))
+                    sub_dictionary[key] = value
+                supplier_map[supplier_name] = sub_dictionary
+            else:
+                # 如果模型不存在，则添加到字典中
+                supplier_map[supplier_name] = supplier_details
+
+        self.Supplier_Map = SafeDotDict(supplier_map)
     
         # 合并字典
         self.Tools_Map = SafeDotDict({
@@ -107,35 +134,18 @@ class ConfigManager:
             **{k: v for k, v in Built_Tools.items() if k not in tools}
         })
         
-        merged = []
-        url_set = set()  # 用于快速查找已存在的URL
         
-        # 先处理第一个列表，确保所有条目都被保留
-        for item in suppliers:
-            merged.append(item)
-            url_set.add(item['url'])
-        
-        # 处理第二个列表，仅添加URL未出现过的条目
-        for item in Built_Suppliers:
-            current_url = item['url']
-            if current_url not in url_set:
-                merged.append(item)
-                url_set.add(current_url)
-        
-        self.Supplier_List = merged
 
     def get_supplier(self, model) -> dict:
-        if self.Supplier_List is None:
-            for supplier in Built_Suppliers:
-                if model in supplier.get("models", []):
-                    return supplier
+        if self.Supplier_Map is None:
+            for supplier,supplier_info in Built_Suppliers.items():
+                if model in supplier_info.get("models", []):
+                    return SafeDotDict(supplier_info)
         else:
-            for supplier in self.Supplier_List:
-                if model in supplier.get("models", []):
-                    return supplier
+            
+            for supplier,supplier_info in self.Supplier_Map.to_dict().items():
+               if model in supplier_info.get("models", []):
+                    return SafeDotDict(supplier_info)
         return None
     
-
-    def get_model(self, model):
-        return self.Model_Map.get(model, None)
     

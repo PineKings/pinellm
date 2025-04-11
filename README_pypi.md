@@ -5,77 +5,56 @@
 
 ---
 
-## 项目概述  
+## 项目概述
+
 PineLLM 是一个用于与多个大语言模型（LLM）供应商进行交互的Python框架，支持灵活的模型配置、成本计算、工具调用等功能。当前支持阿里云Qwen系列模型，未来计划扩展更多供应商。
 
 ---
 
-## 依赖项  
-```python
-requests       # HTTP请求处理
-typing         # 类型提示
-os             # 环境变量处理
-datetime       # 时间处理
-base64         # 图像编码
-decimal        # 高精度计算
-```
+## 核心功能
 
----
+### 1. 多供应商支持
 
-## 核心功能  
-### 1. 多供应商支持  
-- 内置对阿里云Qwen系列模型的支持（如`qwen-plus`、`qwen-max`等）
+- 内置国内大部分模型供应商，如阿里云Qwen系列
 - 可通过配置扩展其他供应商
 
-### 2. 模型配置管理  
+### 2. 模型配置管理
+
 - 模型参数自动填充（如温度、上下文长度等）
 - 供应商API密钥动态加载
 - 模型元数据管理（价格、性能指标等）
 
-### 3. 成本计算  
+### 3. 成本计算
+
 - 根据模型配置计算输入/输出/总费用
 - 支持实时费用统计
 
-### 4. 工具调用  
+### 4. 工具调用
+
 - 内置基础工具（如获取当前时间）
 - 支持自定义工具扩展
 
-### 5. 结构化响应  
+### 5. 结构化响应
+
 - 自动处理JSON/YAML格式响应
-- 提供安全的嵌套数据访问（通过`SafeDotDict`）
+- 提供安全的嵌套数据访问
 
 ---
 
-## 目录结构说明  
-```plaintext
-pinellm/  
-├── __init__.py          # 入口文件
-├── config/              # 配置模块
-│   ├── config_manager.py # 配置管理器
-│   ├── supplier.py      # 供应商信息处理
-│   └── built/           # 内置配置
-│       ├── models.py    # 模型元数据
-│       ├── suppliers.py # 供应商列表
-│       └── tools.py     # 工具定义
-├── llm_chat/            # 聊天核心模块
-│   ├── request.py       # 请求处理
-│   ├── cost.py          # 成本计算
-│   └── tools_utilize.py # 工具调用处理
-├── schemas/             # 数据结构定义
-│   ├── chat_request.py  # 聊天请求模型
-│   └── safedot.py       # 安全字典实现
-├── tools/               # 工具模块
-│   ├── basic/           # 基础工具
-│   │   ├── base_image.py # 图像处理
-│   │   └── get_basic_info.py # 基础信息工具
-│   └── tools_info.py    # 工具元数据
-└── prompts/             # 提示词模板
+## 快速开始
+
+### 安装
+
+```shell
+pip install pinellm
 ```
 
 ---
 
-## 使用示例  
-### 配置管理（使用load_config()）
+## 使用示例
+
+### 配置管理(使用`load_config()`)
+
 ```python
 from pinellm import ConfigManager
 
@@ -168,11 +147,12 @@ config.Tools_Map.get_name = get_name
 def get_age():
     return 18
 config.Tools_Map.get_age = get_age
-
 ```
 
+---
 
-### 基础聊天请求  
+### 基础聊天请求
+
 ```python
 from pinellm import ChatRequest, Message
 
@@ -192,9 +172,11 @@ response = ChatRequest(
 print(f"回答：{response.choices.message.content}") # 回答：你好！我是通义千问，阿里巴巴集团旗下的超大规模语言模型。我能够回答问题、创作文字，比如写故事、写公文、写邮件、写剧本、逻辑推理、编程等等，还能表达观点，玩游戏等。我熟练掌握多种语言，包括但不限于中文、英文、德语、法语、西班牙语等。如果你有任何问题或需要帮助，随时可以问我！
 print(f"费用：{response.price.total_price} 元") # 费用：0.0001848 元
 ```
+
 ---
 
-### 工具调用示例  
+### 工具调用示例
+
 ```python
 # 工具调用示例
 
@@ -299,6 +281,7 @@ else:
 ```
 
 ### 推理模型调用示例(流式)
+
 ```python
 # 引入相关模块
 from pinellm import ChatRequest, Message
@@ -317,12 +300,6 @@ response = ChatRequest(
 ).send_stream()
 if response.error:
     print(f"Error: {response.message}")
----
-
-## 使用说明  
-### 安装  
-```shell
-pip install pinellm
 ```
 
 ---
@@ -428,7 +405,7 @@ pip install pinellm
 
 ## 联系我
 
-- 项目地址：https://github.com/PineKings/pinellm  
+- 项目地址：https://github.com/PineKings/pinellm 
 - 开发者邮件：work.wss@icloud.com
 
 ---

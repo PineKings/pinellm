@@ -2,10 +2,8 @@ from pinellm import ChatRequest, Message, ConfigManager
 from dotenv import load_dotenv
 import os
 
-
 config = ConfigManager()
 load_dotenv()
-
 
 
 # 创建消息
@@ -16,7 +14,7 @@ messages = [
 
 # 发送请求
 response = ChatRequest(
-    model="qwq-plus",
+    model="glm-4-plus",
     messages=messages
 ).send()
 

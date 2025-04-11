@@ -29,6 +29,12 @@ def chat(payload: ChatRequest, headers:dict = None, stream:bool = False) -> Safe
 
     # 创建供应商实例
     supplier = Supplier(payload.model)
+    payload_data = payload.as_dict()
+    
+    # 如果厂商是zhipu，如果调用工具，如果工具没有参数，则修改parameters
+    if supplier.supplier == "zhipu":
+        pass
+        
     
     # 设置请求头
     headers = {
@@ -45,57 +51,63 @@ def chat(payload: ChatRequest, headers:dict = None, stream:bool = False) -> Safe
     
     if stream:
         responses = chat_stream(payload)
-        if isinstance(responses, SafeDotDict):
-            return responses
-        else:
-            reasoning_content = ''
-            chat_content = ''
-            tool_calls = None
-            re_data = {}
-            message = {}
-            choice = {}
-            first = True
-            for response in responses:
-                if first:
-                    object = response.object
-                    created = response.created
-                    system_fingerprint = response.system_fingerprint
-                    model = response.model
-                    id = response.id
-                    first = False
-                if response.choices.message.content:
-                    chat_content += response.choices.message.content
-                else:
+        reasoning_content = ''
+        chat_content = ''
+        tool_calls = None
+        re_data = {}
+        message = {}
+        choice = {}
+        first = True
+        for response in responses:
+            if response.error:
+                return SafeDotDict({
+                    "error": True,
+                    "status_code": response.status_code,
+                    "message": response.message,
+                })
+            if first:
+                object = response.object
+                created = response.created
+                system_fingerprint = response.system_fingerprint
+                model = response.model
+                id = response.id
+                first = False
+            if response.choices.message.content:
+                chat_content += response.choices.message.content
+            else:
+                pass
+            if response.choices.message.reasoning:
+                if "</think>" in response.choices.message.reasoning:
                     pass
-                if response.choices.message.reasoning:
-                    if "</think>" in response.choices.message.reasoning:
-                        pass
-                    else:
-                        reasoning_content += response.choices.message.reasoning
-                if response.choices.message.tool_calls.function.name:
-                    tool_calls = [{
-                        'function': {
-                            'name': response.choices.message.tool_calls.function.name if response.choices.message.tool_calls.function.name else None, 
-                            'arguments': response.choices.message.tool_calls.function.arguments if response.choices.message.tool_calls.function.arguments else "{}"
-                        }, 
-                        'index': response.choices.message.tool_calls.index, 
-                        'id': response.choices.message.tool_calls.id, 
-                        'type': response.choices.message.tool_calls.type
-                    }]
+                else:
+                    reasoning_content += response.choices.message.reasoning
+            if response.choices.message.tool_calls.function.name:
+                tool_calls = [{
+                    'function': {
+                        'name': response.choices.message.tool_calls.function.name if response.choices.message.tool_calls.function.name else None, 
+                        'arguments': response.choices.message.tool_calls.function.arguments if response.choices.message.tool_calls.function.arguments else "{}"
+                    }, 
+                    'index': response.choices.message.tool_calls.index, 
+                    'id': response.choices.message.tool_calls.id, 
+                    'type': response.choices.message.tool_calls.type
+                }]
 
-            message["role"] = "assistant"
-            message["content"] = chat_content
-            message["reasoning_content"] = reasoning_content
-            message["tool_calls"] = tool_calls if tool_calls else None
-            re_data["object"] = object
-            re_data["created"] = created
-            re_data["system_fingerprint"] = system_fingerprint
-            re_data["model"] = model
-            re_data["id"] = id
-            choice["message"] = message
-            choice["finish_reason"] = "stop"
-            re_data["choices"] = [choice]
-            return SafeDotDict(re_data)
+        message["role"] = "assistant"
+        message["content"] = chat_content
+        message["reasoning_content"] = reasoning_content
+        message["tool_calls"] = tool_calls if tool_calls else None
+        message["if_tool_call"] = True if tool_calls else False
+        re_data["object"] = object
+        re_data["created"] = created
+        re_data["system_fingerprint"] = system_fingerprint
+        re_data["model"] = model
+        re_data["id"] = id
+        choice["message"] = message
+        choice["finish_reason"] = "stop"
+        re_data["choices"] = [choice]
+        return SafeDotDict(re_data)
+    
+
     response = requests.request("POST", url=supplier.api_url, json=payload.as_dict(), headers=headers) 
     
     if response.status_code == 200:    
@@ -116,7 +128,7 @@ def chat(payload: ChatRequest, headers:dict = None, stream:bool = False) -> Safe
             "message": response.json().get("error",{}).get("message","请求失败"),
         })
 
-def chat_stream(payload:ChatRequest, headers:dict = None) -> Union[SafeDotDict, Generator[SafeDotDict, None, None]]:
+def chat_stream(payload:ChatRequest, headers:dict = None) -> Generator[SafeDotDict, None, None]:
     """适合于流式的对话"""
     # 创建供应商实例
     supplier = Supplier(payload.model)
@@ -165,7 +177,8 @@ def chat_stream(payload:ChatRequest, headers:dict = None) -> Union[SafeDotDict, 
                                 'index': tool_calls.index, 
                                 'id': tool_calls.id, 
                                 'type': tool_calls.type
-                            }]
+                            }],
+                            "if_tool_call": True if tool_calls.function else False
                         },
                         "finish_reason": finish_reason,
                     }
@@ -177,14 +190,14 @@ def chat_stream(payload:ChatRequest, headers:dict = None) -> Union[SafeDotDict, 
                 "id": data.id
             }
             yield SafeDotDict(re_data)
-    elif response.status_code == 404:
-            return SafeDotDict({
+    elif response.status_code == 404 or response.status_code == 401:
+            yield SafeDotDict({
                 "error": True,
                 "status_code": response.status_code,
-                "message": "404错误，请排查：供应商服务器错误/供应商配置的Api_Url错误/网络错误"
+                "message": f"{response.status_code} 错误，请排查：供应商服务器错误/网络错误/供应商配置的Api or Url错误/"
             })
     else:
-        return SafeDotDict({
+        yield SafeDotDict({
             "error": True,
             "status_code": response.status_code,
             "message": response.json().get("error",{}).get("message","请求失败"),
