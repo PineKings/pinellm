@@ -4,6 +4,11 @@
 /pinellm.egg-info
 .pypirc
 *.env
-models_get.py
 /images
+/tests/
 /tests
+/emdb
+ceshi.py
+/ceshi
+
+

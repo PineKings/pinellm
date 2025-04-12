@@ -2,7 +2,10 @@
 from .built.models import Built_Models
 from .built.tools import Built_Tools
 from .built.suppliers import Built_Suppliers
-from ..schemas.safedot import SafeDotDict,WritableSafeDotDict, ModelTemplate,ToolTemplate,SupplierTemplate
+from .built.emb_models import Built_EmbModels
+from ..schemas.safedot import SafeDotDict,WritableSafeDotDict, ModelTemplate,SupplierTemplate,EmbModelTemplate
+
+from typing import Union
 
 class ConfigManager:
     """安全配置管理器
@@ -33,9 +36,14 @@ class ConfigManager:
                 Built_Suppliers,
                 template=SupplierTemplate
             )
+            cls._instance.Emb_Model_Map = WritableSafeDotDict(
+                Built_EmbModels,
+                template=EmbModelTemplate
+            )
+            
         return cls._instance
 
-    def load_config(self,tools:dict = {}, models:dict = {}, suppliers:dict = {}):
+    def load_config(self,tools:dict = {}, models:dict = {}, suppliers:dict = {}, emb_models:dict = {}):
         """加载配置
 
         Args:
@@ -127,25 +135,82 @@ class ConfigManager:
                 supplier_map[supplier_name] = supplier_details
 
         self.Supplier_Map = SafeDotDict(supplier_map)
+        
+        emb_models_map = Built_EmbModels.copy()
+    
+        # 遍历新字典中的每个模型
+        for emb_model_name, emb_model_details in emb_models.items():
+            if emb_model_name in Built_EmbModels.keys():
+                # 如果模型存在
+                sub_dictionary = Built_EmbModels.get(model_name).copy()
+                for key, value in model_details.items():
+                    sub_dictionary[key] = value
+                emb_models_map[model_name] = sub_dictionary
+            else:
+                # 如果模型不存在，则添加到字典中
+                emb_models_map[model_name] = model_details
+        
+        
+        self.Emb_Model_Map = SafeDotDict(emb_models_map)
     
         # 合并字典
         self.Tools_Map = SafeDotDict({
             **tools,  # 先复制第一个字典的所有键值
             **{k: v for k, v in Built_Tools.items() if k not in tools}
         })
-        
-        
 
     def get_supplier(self, model) -> dict:
-        if self.Supplier_Map is None:
-            for supplier,supplier_info in Built_Suppliers.items():
-                if model in supplier_info.get("models", []):
-                    return SafeDotDict(supplier_info)
-        else:
-            
-            for supplier,supplier_info in self.Supplier_Map.to_dict().items():
-               if model in supplier_info.get("models", []):
-                    return SafeDotDict(supplier_info)
-        return None
-    
-    
+        """获取模型对应的供应商信息"""
+       
+        suppliers = self.Supplier_Map.to_dict()
+        
+        def _supplier(info:SafeDotDict):
+            #print(f"找到模型{model}配置信息: {info}")
+            supplier = info.supplier
+            modelname = info.name
+            #print(f"供应商: {supplier}, 模型名称: {modelname}")
+            #print(f"供应商列表：{suppliers.keys()}")
+            if supplier in suppliers.keys():
+                
+                return suppliers[supplier]
+            else:
+                # 如果不在供应商配置的键中，则去供应商配置的 models 和 emb_models 中查找是否存在
+                for supplier_key,supplier_value in suppliers.items():
+                    if supplier_key == '_template':
+                        continue
+                    if modelname in supplier_value.get('models',[]):
+                        return suppliers[supplier_key]
+                    elif modelname in supplier_value.get('emd_models',[]):
+                        return suppliers[supplier_key]
+                raise Exception(f"没有找到模型{model}的供应商信息: 供应商的模型配置中无此模型")
+        modelinfo = self.get_model(model)
+        return _supplier(modelinfo)
+
+    def get_model(self, model) -> Union[SafeDotDict,any]:
+        """解决模型命名或者格式不一致下获取模型信息"""
+        if self.Supplier_Map is None or self.Model_Map is None or self.Emb_Model_Map is None:
+            raise Exception("请先配置模型和供应商信息")
+        models = self.Model_Map.to_dict()
+        emb_models = self.Emb_Model_Map.to_dict()
+        suppliers = self.Supplier_Map.to_dict()
+        
+        if model in models.keys() or model in emb_models.keys():
+            if model in emb_models.keys():
+                return SafeDotDict(emb_models.get(model))
+            else:
+                return SafeDotDict(models.get(model))
+        
+        for a in models.values():
+            if isinstance(a, dict):
+                if model == a.get('name') or model == a.get('newname',None):
+                    return SafeDotDict(a)
+            else:
+                continue
+        for b in emb_models.values():
+            #print(f"在{b}中查找模型{model}")
+            if isinstance(b, dict):
+                if model == b.get('name') or model == b.get('newname',None):
+                    return SafeDotDict(b)
+            else:
+                continue
+        raise Exception(f"没有找到模型{model}的配置信息,模型没有配置")

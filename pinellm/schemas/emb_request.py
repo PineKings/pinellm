@@ -3,7 +3,7 @@ from typing import Dict, Union
 import requests
 
 from ..tools.basic.base_image import encode_image
-from ..schemas.safedot import SafeDotDict
+from .safedot import SafeDotDict
 
 
 class Propertie:
@@ -194,25 +194,13 @@ class ResponseFormat:
     def __repr__(self):
         return f"ResponseFormat(type={self.type!r})"
 
-class ChatRequest:
+class EmbRequest:
     """完整的llm请求结构体,其中`model`和`messages`为必须参数，其他参数可选，为空则调用`config`模块中定义的默认值
     
     参数：
     - model(str): 【必要】模型名称
-    - messages(list[Message]): 【必要】对话消息列表，需要通过`Message`类创建
-    - modalities(list[str]): 输出的模态类型，只支持Qwen-Omni模型，可选值：`["text"]`，默认为`["text"]`
-    - temperature(float): 采样温度，控制模型生成文本的多样性，越高越多样。取值范围 `[0, 2)`，默认为0.7
-    - top_p(float): 采样Top-p，控制模型生成文本的确定性，越低越确定。取值范围`[0, 1)`，默认为`0.8`
-    - presence_penalty(float): 阻止模型生成重复文本的惩罚系数，取值范围 `[-2, 2)`，默认为`0`，正数会减少重复度（专业性），负数会增加重复度（创造性）
-    - response_format(ResponseFormat): 返回内容的格式。可选值：`{"type": "text"}`或`{"type": "json_object"}`，当为`json_object`时，必须在提示词中指定返回格式，需通过`ResponseFormat`类创建
-    - max_tokens(int): 返回内容的最大Token数
-    - n(int): 返回内容的数量，默认为1
-    - seed(int): 内容的随机种子，取值范围：0到2^31−1，默认为1234
-    - tools(list[Tool]): 可供模型调用的工具数组，可以包含一个或多个工具对象。一次Function Calling流程模型会从中选择一个工具，需要通过`Tool`类创建
-    - tool_choice(any): 工具选择策略，可选值：`"auto"`/`"none"`/`{"type": "function", "function": {"name": "the_function_to_call"}}`。默认为`"auto"`，表示模型会根据上下文自动选择工具；`"none"`表示不调用工具；`"function"`表示调用指定的工具。
-    - enable_search(bool): 是否启用搜索，若模型不支持，则忽略该参数。默认为`False`
-    - model_version(int): 模型版本，默认为1,可选值：1/2/3,1/2为稳定版，最新版，3为自定义版本
-    - model_name(str): 模型名称，默认为None，当`model_version`为3时，该参数必填，请确保该模型存在
+    - input(str): 【必要】输入内容
+    - dimensions(int): 输出向量维度
     
     方法：
     - as_dict(): 将请求结构体转换为字典，用于使用外部函数发送到API
@@ -222,37 +210,18 @@ class ChatRequest:
     def __init__(
         self,
         model: str,
-        messages: list[Message],
-        modalities: list[str] = None,
-        temperature: float = None,
-        top_p: float = None,
-        presence_penalty: float = None,
-        response_format: ResponseFormat = None,
-        max_tokens: int = None,
-        n: int = None,
-        seed: int = None,
-        tools: list[Tool] = None,
-        tool_choice: str = None,
-        enable_search: bool = None,
-        model_version: int  = 1,
-        model_name: str = None,
-        stream = False
+        input: list[],
+        dimensions: int = None,
     ):
         from ..config.config_manager import ConfigManager
         
-        self.messages = messages
-        model_info = ConfigManager().EmbModel.get(model)
+        model_info = ConfigManager().Emd_Model_Map.get(model)
         if model_info is None:
             from ..errors import ModelError
             raise ModelError(f"模型: {model} 不存在,请确保配置文件中包含该模型")
-        if model_version == 2:
-            self.model = model_info.newname if model_info.newname is not None else model
-        elif model_version == 3:
-            if model_name is None:
-                raise ParamError("当model_version为3时，model_name不能为空")
-            self.model = model_name
         else:  # model_version 默认为1
             self.model = model
+        
         self.modalities = ["text"] if modalities is None else modalities
         
         self.temperature = model_info.temperature if temperature is None else temperature

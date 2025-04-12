@@ -29,6 +29,7 @@ class Supplier:
         self.supplier = supplier_info.get("name")
         self.api_key = supplier_info.get("api_key")
         self.api_url = supplier_info.get("url")
+        self.emb_url = supplier_info.get("emb_url",None)
         self.model = model
                     
         

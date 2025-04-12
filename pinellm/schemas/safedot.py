@@ -7,11 +7,30 @@ class SupplierTemplate:
         "url": (str, None),
         "api_key": (str,None),  # 字符串或函数
         "models": (list, []),         # 列表，默认空列表
-        "type": (str, "default_type") # 字符串，默认值
+        "type": (str, "default_type"), # 字符串，默认值
+        "emd_models": (list, [])
     }
+    
+class EmbModelTemplate:
+    allowed_fields = {
+        "supplier": (str, None),
+        "name": (str, None),
+        "type": (str, "text"),
+        "description": (str, ""),
+        "dimensions":(list, None),
+        "max_lines":(int, None),
+        "max_line_tokens": (int, None),
+        "price_in": (float, None),
+        "text_input": (bool, True),
+        "image_input": (bool, False),
+        "video_input": (bool, False),
+        "audio_input": (bool, False)
+    }
+
 
 class ModelTemplate:
     allowed_fields = {
+        "supplier": (str, None),
         "newname": (str, None),
         "name": (str, None),
         "type": (str, "text"),
@@ -152,7 +171,11 @@ class SafeDotDict:
         
 class WritableSafeDotDict(SafeDotDict):
     def __init__(self, data, template=None):
+        # 调用父类的构造方法，初始化父类部分的数据
         super().__init__(data)
+        # 初始化当前类的模板属性
+        # _template 用于存储模板对象，例如 SupplierTemplate 类的实例
+        # 如果调用时没有提供 template 参数，则默认为 None
         self._template = template  # 模板对象，如 SupplierTemplate
 
     def __setattr__(self, name, value):
@@ -161,7 +184,12 @@ class WritableSafeDotDict(SafeDotDict):
             return
         
         if self._template:
-            field_type, default = self._template.allowed_fields[name]
+            try:
+                field_type, default = self._template.allowed_fields[name]
+            except KeyError:
+                raise AttributeError(
+                    f"'{name}'参数不存在，无法设置！\n请选择以下参数：{list(self._template.allowed_fields.keys())}"
+                )
             
             # 验证属性是否在模板允许的字段中
             if self._template and name not in self._template.allowed_fields:

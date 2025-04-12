@@ -1,5 +1,6 @@
 Built_Models = {
-    "qwen-plus":{
+    "qwen_plus":{
+        "supplier": "qwen",
         "newname": "qwen-plus-latest",
         "name": "qwen-plus",
         "type": "text",
@@ -30,6 +31,7 @@ Built_Models = {
         "seed": 1234
     },
     "deepseek-chat":{
+        "supplier": "deepseek",
         "newname": "deepseek-chat",
         "name": "deepseek-chat",
         "type": "text",
@@ -61,6 +63,7 @@ Built_Models = {
         "stream":False
     },
     "deepseek-reasoner":{
+        "supplier": "deepseek",
         "newname": "deepseek-reasoner",
         "name": "deepseek-reasoner",
         "type": "text",
@@ -92,6 +95,7 @@ Built_Models = {
         "stream":True  
     },
     "qwq-plus":{
+        "supplier": "qwen",
         "newname": "qwq-plus-latest",
         "name": "qwq-plus",
         "type": "text",
@@ -123,10 +127,43 @@ Built_Models = {
         "stream":True
     },
     "glm-4-plus":{
+        "supplier": "zhipu",
         "newname": "glm-4-plus",
         "name": "glm-4-plus",
         "type": "text",
-        "description": "能力均衡，推理效果、成本和速度介于通义千问-Max和通义千问-Turbo之间，适合中等复杂任务。",
+        "description": "高智能旗舰: 性能全面提升，长文本和复杂任务能力显著增强",
+        "price_in": 0.05,
+        "price_out": 0.05,
+        "max_tokens_in": 131072,
+        "max_tokens_out": 8192,
+        "max_thought": 32768,
+        "max_context": 131072,
+        "enable_search": True,
+        "response_format": False,
+        "tools": True,
+        "text_input": True,
+        "text_output": True,
+        "audio_input": False,
+        "audio_output": False,
+        "image_input": False,
+        "image_output": False,
+        "video_input": False,
+        "video_output": False,
+        "thought_chain": False,
+        "modalities": ["text"],
+        "temperature": 1,
+        "top_p": 1,
+        "presence_penalty": 0,
+        "n": 1,
+        "seed": 1234,
+        "stream":False 
+    },
+    "glm-4-air":{
+        "supplier": "zhipu",
+        "newname": "glm-4-air",
+        "name": "glm-4-air",
+        "type": "text",
+        "description": "高智能旗舰: 性能全面提升，长文本和复杂任务能力显著增强",
         "price_in": 0.05,
         "price_out": 0.05,
         "max_tokens_in": 131072,

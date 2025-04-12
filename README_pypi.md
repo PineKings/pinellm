@@ -122,6 +122,7 @@ config.load_config(tools=mytools)
 ```
 
 ### 配置管理（直接设置参数）
+
 ```python
 from pinellm import ConfigManager
 
