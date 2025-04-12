@@ -144,13 +144,13 @@ Built_Models = {
         "image_output": False,
         "video_input": False,
         "video_output": False,
-        "thought_chain": True,
+        "thought_chain": False,
         "modalities": ["text"],
         "temperature": 1,
         "top_p": 1,
         "presence_penalty": 0,
         "n": 1,
         "seed": 1234,
-        "stream":True 
+        "stream":False 
     }
 }

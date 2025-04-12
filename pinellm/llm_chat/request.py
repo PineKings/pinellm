@@ -32,10 +32,26 @@ def chat(payload: ChatRequest, headers:dict = None, stream:bool = False) -> Safe
     payload_data = payload.as_dict()
     
     # 如果厂商是zhipu，如果调用工具，如果工具没有参数，则修改parameters
-    if supplier.supplier == "zhipu":
-        pass
+    if supplier.supplier == "zhipu" and payload_data.get("tools", None) is not None:
+        for tool in payload_data.get("tools", None):
+            if tool.get("function", {}).get("parameters", {}).get("properties",{}) is None:
+                tool["function"] = {
+                    "name": tool["function"]["name"],
+                    "description": tool["function"]["description"],
+                    "parameters": {
+                        "type": "object",
+                        "properties": {}
+                    }
+                }
+    if supplier.supplier == "zhipu" and payload.enable_search is True:
+        web_search = {
+            "type": "web_search",
+            "web_search": {
+                "enable": True  # 启用网络搜索
+            }
+        }
+        payload_data["tools"].append(web_search)
         
-    
     # 设置请求头
     headers = {
         "Authorization": f"Bearer {supplier.api_key}",  # 设置授权信息
@@ -48,7 +64,7 @@ def chat(payload: ChatRequest, headers:dict = None, stream:bool = False) -> Safe
     if supplier.api_key is None:
         from ..errors import SupplierError
         raise SupplierError(f"模型{payload.model}对应的供应商{supplier.supplier}没有配置API_KEY")
-    
+    print(f"请求体：{payload_data}")
     if stream:
         responses = chat_stream(payload)
         reasoning_content = ''
@@ -108,8 +124,8 @@ def chat(payload: ChatRequest, headers:dict = None, stream:bool = False) -> Safe
         return SafeDotDict(re_data)
     
 
-    response = requests.request("POST", url=supplier.api_url, json=payload.as_dict(), headers=headers) 
-    
+    response = requests.request("POST", url=supplier.api_url, json=payload_data, headers=headers) 
+    print(f"状态码：{response.status_code}，响应内容：{response.text}")
     if response.status_code == 200:    
         data = response.json()
         data["price"] = cost(SafeDotDict(data))
@@ -146,9 +162,30 @@ def chat_stream(payload:ChatRequest, headers:dict = None) -> Generator[SafeDotDi
         from ..errors import SupplierError
         raise SupplierError(f"模型{payload.model}对应的供应商{supplier.supplier}没有配置API_KEY")
     
-    payload = payload.as_dict()
-    payload["stream"] = True
-    response = requests.request("POST", url=supplier.api_url, json=payload, headers=headers) 
+    payload_data = payload.as_dict()
+    # 如果厂商是zhipu，如果调用工具，如果工具没有参数，则修改parameters
+    if supplier.supplier == "zhipu" and payload_data.get("tools", None) is not None:
+        for tool in payload_data.get("tools", None):
+            if tool.get("function", {}).get("parameters", {}).get("properties",{}) is None:
+                tool["function"] = {
+                    "name": tool["function"]["name"],
+                    "description": tool["function"]["description"],
+                    "parameters": {
+                        "type": "object",
+                        "properties": {}
+                    }
+                }
+    if supplier.supplier == "zhipu" and payload.enable_search is True:
+        web_search = {
+            "type": "web_search",
+            "web_search": {
+                "enable": True  # 启用网络搜索
+            }
+        }
+        payload_data["tools"].append(web_search)
+        
+    payload_data["stream"] = True
+    response = requests.request("POST", url=supplier.api_url, json=payload_data, headers=headers) 
     if response.status_code == 200:
         for data in stream_response(response):
             data = SafeDotDict(data)

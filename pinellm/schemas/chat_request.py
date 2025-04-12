@@ -137,13 +137,14 @@ class Message:
     方法：
     - as_dict(): 将消息结构体转换为字典，用于发送到API
     """
-    def __init__(self, role: str, content: Union[Content,str], tool_call_id: str = None,tool_calls:list = None,*args, **kwargs):
+    def __init__(self, role: str, content: Union[Content,str] = None, tool_call_id: str = None,tool_calls:list = None,*args, **kwargs):
         self.role = role
         if isinstance(content, Content):
             self.content = content.as_dict()
-        else:
+        elif content is not None:
             self.content = Content(text=content).as_dict()
-            
+        else:
+            self.content = ""
         if role == "tool":
             self.tool_call_id = tool_call_id
         else:

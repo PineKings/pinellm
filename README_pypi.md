@@ -351,6 +351,18 @@ if response.error:
   - deepseek-chat
   - deepseek-reasoner(推理模型)
 
+### **智谱AI**
+
+- API文档：[智谱AI文档](https://open.bigmodel.cn/dev/welcome)
+- 供应商：[智谱AI供应商](https://open.bigmodel.cn/)
+- 模型列表：[智谱AI模型列表](https://open.bigmodel.cn/dev/howuse/model)
+  - glm-4-plus
+  - glm-4-air
+  - glm-4-airx
+  - glm-4-long
+  - glm-4-flashx
+  - glm-4-flash
+
 ---
 
 ## 模块详解  

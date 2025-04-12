@@ -5,3 +5,5 @@
 .pypirc
 *.env
 models_get.py
+/images
+/tests
